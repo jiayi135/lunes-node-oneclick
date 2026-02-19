@@ -1,0 +1,22 @@
+{
+  "name": "lunes-node-xray",
+  "version": "1.0.0",
+  "description": "Xray VLESS-WS node for lunes.host Pterodactyl panel",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "xray",
+    "vless",
+    "websocket",
+    "lunes.host",
+    "node"
+  ],
+  "author": "Manus AI",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.7",
+    "uuid": "^9.0.1"
+  }
+}
