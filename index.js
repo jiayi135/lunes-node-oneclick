@@ -82,10 +82,35 @@ async function main() {
     fs.writeFileSync(XRAY_CONFIG_PATH, JSON.stringify(config, null, 2));
     console.log('✅ Xray 配置文件生成完成。');
 
-    // 4. 启动 Xray 服务
+    // 4. 启动 Xray 服务 (使用 spawn 以便非阻塞运行)
     console.log('🚀 正在启动 Xray 服务...');
-    const xrayProcess = execSync(`${XRAY_BIN} run -c ${XRAY_CONFIG_PATH}`, { stdio: 'inherit' });
-    console.log('✅ Xray 服务已启动。');
+    const { spawn } = require('child_process');
+    const xray = spawn(XRAY_BIN, ['run', '-c', XRAY_CONFIG_PATH], { stdio: 'inherit' });
+
+    xray.on('close', (code) => {
+        console.log(`❌ Xray 进程退出，退出码: ${code}`);
+        process.exit(code);
+    });
+
+    // 5. 保活机制 (Keep-alive mechanism)
+    console.log('🛡️ 正在启动保活机制...');
+    
+    // 定时自访问，产生流量
+    setInterval(async () => {
+        try {
+            const url = `http://${DOMAIN}:${PORT}${WS_PATH}`;
+            await axios.get(url, { timeout: 5000, validateStatus: false });
+            console.log(`[${new Date().toLocaleTimeString()}] 🛡️ 保活自访问成功: ${url}`);
+        } catch (error) {
+            console.log(`[${new Date().toLocaleTimeString()}] 🛡️ 保活自访问提醒 (正常现象): ${error.message}`);
+        }
+    }, 10 * 60 * 1000); // 每 10 分钟访问一次
+
+    // 定时执行轻量级任务，模拟 CPU 活跃
+    setInterval(() => {
+        const usage = process.memoryUsage();
+        console.log(`[${new Date().toLocaleTimeString()}] 📊 系统状态 - 内存占用: ${Math.round(usage.rss / 1024 / 1024)}MB`);
+    }, 30 * 60 * 1000); // 每 30 分钟记录一次状态
 
     // 5. 输出 VLESS 链接
     const VLESS_LINK = `vless://${UUID}@${DOMAIN}:${PORT}?encryption=none&security=none&type=ws&path=${WS_PATH}#lunes_node`;
